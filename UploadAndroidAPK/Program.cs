@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Diagnostics;
 using System.Net;
 using RestSharp;
@@ -9,21 +10,22 @@ namespace UploadAndroidAPK
     {
         static void Main(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length != 3)
             {
-                Console.WriteLine("Required args: <application_id> <version>");
+                Console.WriteLine("Required args: <application_id> <version> <file_path>");
                 return;
             }
 
             var applicationId = args[0];
             var version = int.Parse(args[1]);
+            var apkPath = args[2];
             var accessToken = Console.ReadLine();
 
             Console.WriteLine("Preparing to upload APK");
             
             var restClient = new RestClient("https://www.googleapis.com");
             var editId = CreateEdit(restClient, applicationId, accessToken);
-            UploadApk(restClient, accessToken, applicationId, editId);
+            UploadApk(restClient, accessToken, applicationId, editId, apkPath);
             SetTrack(restClient, accessToken, applicationId, editId, version);
             CommitEdit(restClient, accessToken, applicationId, editId);
 
@@ -42,14 +44,14 @@ namespace UploadAndroidAPK
             return response.Data.Id;
         }
 
-        private static void UploadApk(IRestClient restClient, string accessToken, string applicationId, string editId)
+        private static void UploadApk(IRestClient restClient, string accessToken, string applicationId, string editId, string apkPath)
         {
             Console.WriteLine("Uploading apk");
             var request = new RestRequest("/upload/androidpublisher/v2/applications/{applicationId}/edits/{editId}/apks", Method.POST);
             request.AddUrlSegment("applicationId", applicationId);
             request.AddUrlSegment("editId", editId);
             request.AddQueryParameter("access_token", accessToken);
-            request.AddFile("file", "Build/amyloids.apk");
+            request.AddFile("file", apkPath);
             var response = restClient.Execute<EditResponse>(request);
             CheckResponse(response);
         }
