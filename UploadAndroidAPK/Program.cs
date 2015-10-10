@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom;
 using System.Diagnostics;
 using System.Net;
 using RestSharp;
@@ -8,6 +7,8 @@ namespace UploadAndroidAPK
 {
     class Program
     {
+        private const int _10_MIN_IN_MILLIS = 600000;
+
         static void Main(string[] args)
         {
             if (args.Length != 3)
@@ -17,9 +18,13 @@ namespace UploadAndroidAPK
             }
 
             var applicationId = args[0];
+            Console.Out.WriteLine("applicationId = {0}", applicationId);
             var version = int.Parse(args[1]);
+            Console.Out.WriteLine("version = {0}", version);
             var apkPath = args[2];
+            Console.Out.WriteLine("apkPath = {0}", apkPath);
             var accessToken = Console.ReadLine();
+            Console.Out.WriteLine("accessToken = {0}", accessToken);
 
             Console.WriteLine("Preparing to upload APK");
             
@@ -48,6 +53,7 @@ namespace UploadAndroidAPK
         {
             Console.WriteLine("Uploading apk");
             var request = new RestRequest("/upload/androidpublisher/v2/applications/{applicationId}/edits/{editId}/apks", Method.POST);
+            request.Timeout = _10_MIN_IN_MILLIS;
             request.AddUrlSegment("applicationId", applicationId);
             request.AddUrlSegment("editId", editId);
             request.AddQueryParameter("access_token", accessToken);
@@ -84,10 +90,11 @@ namespace UploadAndroidAPK
         {
             Console.Out.WriteLine("Got status code: " + response.StatusCode);
             Console.Out.WriteLine("Got content: " + response.Content);
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                throw new Exception("Unexpected statusCode: " + response.StatusCode);
-            }
+            if (response.StatusCode == HttpStatusCode.OK)
+                return;
+            Console.Out.WriteLine("Got error message: " + response.ErrorMessage);
+            Console.Out.WriteLine("Got error exception: " + response.ErrorException);
+            throw new Exception("Unexpected statusCode: " + response.StatusCode);
         }
     }
 }
